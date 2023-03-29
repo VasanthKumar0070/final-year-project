@@ -1,0 +1,111 @@
+
+    String data;
+    void setup()
+      {
+  
+       Serial.begin(9600);    
+       delay(100);
+
+      }
+    
+    
+    void loop() 
+      {  
+
+
+
+         int mems1 = analogRead(A1);
+
+        Serial.print("mems_1 :");
+        Serial.println(mems1); 
+
+
+         int mems_2 = analogRead(A2);
+        Serial.print ("mems_2 :");
+        Serial.println (mems_2);
+      
+ 
+         String data= String(mems1)+"@"+String(mems_2)+"#";
+          Serial.println(data);
+           Serial.println();
+delay(1000);
+      }
+
+
+
+...........................................................
+
+Thingspeak code
+
+#include "ThingSpeak.h"
+#include <ESP8266WiFi.h>
+
+char ssid[] = "NoviTech R&D pvt ltd";   // your network SSID (name)
+char pass[] = "NOVITECHR&D";   // your network password
+int keyIndex = 0;            // your network key Index number (needed only for WEP)
+WiFiClient  client;
+
+unsigned long myChannelNumber = 2042152;
+const char * myWriteAPIKey = "JOMEZ5JDAMFV2Z69";
+String myStatus = "";
+
+void setup()
+{
+  Serial.begin(9600);  // Initialize serial
+  WiFi.mode(WIFI_STA);
+  ThingSpeak.begin(client);  // Initialize ThingSpeak
+  // Connect or reconnect to WiFi
+  if (WiFi.status() != WL_CONNECTED)
+  {
+    Serial.print("Attempting to connect to SSID: ");
+    Serial.println(ssid);
+    while (WiFi.status() != WL_CONNECTED)
+    {
+      WiFi.begin(ssid, pass);  // Connect to WPA/WPA2 network. Change this line if using open or WEP network
+      Serial.print(".");
+      delay(5000);
+    }
+    Serial.println("\nConnected.");
+  }
+}
+
+void loop()
+{
+
+  String data;
+  while (Serial.available())
+  {
+    data = Serial.readStringUntil('@');
+    data.trim();
+    String temperature = data;
+    data = Serial.readStringUntil('#');
+    data.trim();
+    delay(2000)
+    
+
+
+   
+    ThingSpeak.setField(1, mems_1);
+    ThingSpeak.setField(2, mems_2);
+    
+
+
+    ThingSpeak.setStatus(myStatus);
+
+    // write to the ThingSpeak channel
+    int x = ThingSpeak.writeFields(myChannelNumber, myWriteAPIKey );
+    if (x == 200)
+    {
+      Serial.println("Channel update successful.");
+    }
+    else
+    {
+      Serial.println("Problem updating channel. HTTP error code " + String(x));
+    }
+
+    delay(1000); // Wait 20 seconds to update the channel again
+  }
+}
+
+
+

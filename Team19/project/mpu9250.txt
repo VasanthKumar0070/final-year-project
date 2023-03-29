@@ -1,0 +1,66 @@
+#include <Wire.h> // include the Wire library for I2C communication
+#include <ESP8266WiFi.h> // include the ESP8266WiFi library for connecting to WiFi
+#include <ThingSpeak.h> // include the ThingSpeak library for sending data to ThingSpeak
+#include <Adafruit_MPU6050.h>
+#include <Adafruit_Sensor.h>
+const int MPU_addr=0x68; // I2C address of gy521 sensor
+int16_t AcX,AcY,AcZ,Tmp,GyX,GyY,GyZ;
+Adafruit_MPU6050 mpu;
+const char* ssid = "VITTAL1804"; // your WiFi SSID
+const char* password = "12345678"; // your WiFi password
+unsigned long myChannelNumber = 2075607;
+const char * myWriteAPIKey = "7F0P43M0TVTCZ0O6";
+WiFiClient client;
+
+void setup() {
+  Wire.begin();
+  Serial.begin(9600);
+  WiFi.begin(ssid, password);
+ 
+  ThingSpeak.begin(client); // initialize ThingSpeak communication
+}
+
+void loop() {
+
+ 
+  /* Get new sensor events with the readings */
+  sensors_event_t a, g, temp;
+  mpu.getEvent(&a, &g, &temp);
+  
+
+  /* Print out the values */
+  Serial.print("Acceleration X: ");
+  Serial.print(a.acceleration.x);
+  Serial.print(", Y: ");
+  Serial.print(a.acceleration.y);
+  Serial.print(", Z: ");
+  Serial.print(a.acceleration.z);
+  Serial.println(" m/s^2");
+
+  Serial.print("Rotation X: ");
+  Serial.print(g.gyro.x);
+  Serial.print(", Y: ");
+  Serial.print(g.gyro.y);
+  Serial.print(", Z: ");
+  Serial.print(g.gyro.z);
+  Serial.println(" rad/s");
+
+  Serial.print("Temperature: ");
+  Serial.print(temp.temperature);
+  Serial.println(" degC");
+
+  Serial.println("");
+
+  ThingSpeak.setField(1, a.acceleration.x);
+  ThingSpeak.setField(2, a.acceleration.y);
+  ThingSpeak.setField(3, a.acceleration.z);
+  ThingSpeak.setField(4, g.gyro.x);
+  ThingSpeak.setField(5, g.gyro.y);
+  ThingSpeak.setField(6, g.gyro.z);
+
+  delay(500);
+  // Write to ThingSpeak. There are up to 8 fields in a channel, allowing you to store up to 8 different
+    // pieces of information in a channel.  Here, we write to field 1.
+    int x = ThingSpeak.writeFields(myChannelNumber, myWriteAPIKey);
+    delay(500);
+  }
